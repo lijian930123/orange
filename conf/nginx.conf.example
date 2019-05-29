@@ -1,3 +1,4 @@
+user root;
 worker_processes  4;
 
 events {
@@ -32,6 +33,14 @@ http {
         server localhost:8001;
     }
 
+    upstream orange_upstream {
+        server 0.0.0.0;
+        balancer_by_lua_block {
+            local orange = context.orange
+            orange.balancer()
+        }
+    }
+
     #
     # Config client_body_buffer_size equal client_max_body_size for enforcing in-memory buffering of the whole request body
     # ref: https://github.com/openresty/lua-nginx-module/issues/521
@@ -42,7 +51,7 @@ http {
     client_max_body_size 1m;
 
     #----------------------------Orange configuration-----------------------------
-    lua_package_path '../?.lua;/usr/local/lor/?.lua;;';
+    lua_package_path '/usr/local/orange/?.lua;/usr/local/lor/?.lua;;';
     lua_code_cache on;
 
     lua_shared_dict orange_data 20m; # should not removed. used for orange data, e.g. plugins configurations..
@@ -54,6 +63,7 @@ http {
     lua_shared_dict property_rate_limiting 10m; # used for rate limiting count, see plugin: rate_limiting
     lua_shared_dict consul_upstream 5m; # used for consul_upstream, see plugin consul_balancer
     lua_shared_dict consul_upstream_watch 5m; # used for consul_upstream_watch, consul_balancer
+    lua_shared_dict consul_upstream_stat 1m; # used for consul upstream statistic, see plugin : consul_balancer
 
 
 
@@ -83,6 +93,16 @@ http {
     # main server
     server {
         listen       80;
+	    large_client_header_buffers 4 16k;
+	    client_max_body_size 300m;
+	    client_body_buffer_size 128k;
+        proxy_connect_timeout 600;
+        proxy_read_timeout 600;
+        proxy_send_timeout 600;
+        proxy_buffer_size 64k;
+        proxy_buffers   4 32k;
+        proxy_busy_buffers_size 64k;
+        proxy_temp_file_write_size 64k;
         #server_name  my_domain.com;
 
         location = /favicon.ico {
@@ -91,10 +111,12 @@ http {
         }
 
         location / {
+	    #resolver 8.8.8.8;
             set $upstream_host $host;
             set $upstream_request_uri '';
             set $upstream_url '';
             set $upstream_scheme '';
+	        set $target '';
 
             rewrite_by_lua_block {
                 local orange = context.orange
@@ -104,7 +126,7 @@ http {
 
             access_by_lua_block {
                 local orange = context.orange
-                orange.access()
+		        orange.access()
             }
 
             # proxy
@@ -113,12 +135,16 @@ http {
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Scheme $scheme;
-            proxy_pass $upstream_scheme$upstream_url$upstream_request_uri;
+	        proxy_set_header Host $upstream_host;
+            #proxy_pass $upstream_scheme$upstream_url$upstream_request_uri;
+	        proxy_pass $target;
+	        proxy_set_header Via "";
 
 
             header_filter_by_lua_block {
                 local orange = context.orange
                 orange.header_filter()
+		        ngx.header.content_length = nil
             }
 
             body_filter_by_lua_block {
@@ -135,6 +161,7 @@ http {
         location /robots.txt {
             return 200 'User-agent: *\nDisallow: /';
         }
+
     }
 
     # default upstream server

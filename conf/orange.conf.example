@@ -3,7 +3,9 @@
         "stat",
         "headers",
         "monitor",
-        "dynamic_upstream",
+	    "dynamic_upstream",
+        "body_filter",
+        "header_filter",
         "redirect",
         "rewrite",
         "rate_limiting",
@@ -22,11 +24,11 @@
     "store_mysql": {
         "timeout": 5000,
         "connect_config": {
-            "host": "127.0.0.1",
-            "port": 3306,
-            "database": "orange",
+            "host": "10.10.38.195",
+            "port": 4406,
+            "database": "orange_v07",
             "user": "root",
-            "password": "",
+            "password": "123456",
             "charset": "utf8",
             "max_packet_size": 1048576
         },
@@ -45,12 +47,18 @@
         ]
     },
     "api": {
-        "auth_enable": true,
+        "auth_enable": false,
         "credentials": [
             {
                 "username":"api_username",
                 "password":"api_password"
             }
         ]
+    },
+	"consul": {
+        "host" : "127.0.0.1",
+        "port" : 8500,
+        "interval" : 10
     }
+
 }
