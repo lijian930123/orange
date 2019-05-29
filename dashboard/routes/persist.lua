@@ -1,4 +1,4 @@
-local lor = require("lor.index")
+ local lor = require("lor.index")
 
 return function(config, store)
 

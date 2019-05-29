@@ -116,6 +116,14 @@ return function(config, store)
         res:render("monitor")
     end)
 
+    dashboard_router:get("/body_filter", function(req, res, next)
+        res:render("body_filter")
+    end)
+
+    dashboard_router:get("/header_filter", function(req, res, next)
+        res:render("header_filter")
+    end)
+
     dashboard_router:get("/monitor/rule/statistic", function(req, res, next)
         local rule_id = req.query.rule_id;
         local rule_name = req.query.rule_name or "";

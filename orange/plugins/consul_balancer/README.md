@@ -36,10 +36,9 @@
     "plugins"中增加consul_balancer;
     在"api"之后增加consul服务的配置信息，例如
     "consul": {
-        "host" : "10.0.201.156",
+        "host" : "127.0.0.1",
         "port" : 8500,
-        "interval" : 10,
-        "token" : 'token'
+        "interval" : 10
     }
     interval计量单位为s
     token为ACL中指定的token,(注，未测试)

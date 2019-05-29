@@ -523,6 +523,56 @@ VALUES
 /*!40000 ALTER TABLE `jwt_auth` ENABLE KEYS */;
 UNLOCK TABLES;
 
+# Dump of table body_filter
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `body_filter`;
+
+CREATE TABLE `body_filter` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) NOT NULL DEFAULT '',
+  `value` varchar(2000) NOT NULL DEFAULT '',
+  `type` varchar(11) DEFAULT '0',
+  `op_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_key` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+LOCK TABLES `body_filter` WRITE;
+/*!40000 ALTER TABLE `body_filter` DISABLE KEYS */;
+
+INSERT INTO `body_filter` (`id`, `key`, `value`, `type`, `op_time`)
+VALUES
+    (1,'1','{}','meta','2016-11-11 11:11:11');
+
+/*!40000 ALTER TABLE `body_filter` ENABLE KEYS */;
+UNLOCK TABLES;
+
+# Dump of table body_filter
+# ------------------------------------------------------------
+
+DROP TABLE IF EXISTS `header_filter`;
+
+CREATE TABLE `header_filter` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `key` varchar(255) NOT NULL DEFAULT '',
+  `value` varchar(2000) NOT NULL DEFAULT '',
+  `type` varchar(11) DEFAULT '0',
+  `op_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_key` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+LOCK TABLES `header_filter` WRITE;
+/*!40000 ALTER TABLE `header_filter` DISABLE KEYS */;
+
+INSERT INTO `header_filter` (`id`, `key`, `value`, `type`, `op_time`)
+VALUES
+    (1,'1','{}','meta','2016-11-11 11:11:11');
+
+/*!40000 ALTER TABLE `header_filter` ENABLE KEYS */;
+UNLOCK TABLES;
+
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

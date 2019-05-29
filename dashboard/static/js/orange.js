@@ -492,8 +492,7 @@
                 var value = self.find("input[name=rule-header-value-default]").val();
                 // console.log(value)
                 if (!value) {
-                    tmp_success = false;
-                    tmp_tip = "header value 字段不得为空";
+                    value = "";
                 }
 
                 header.value = value;
