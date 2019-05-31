@@ -50,7 +50,7 @@ local function filter_rules(sid, plugin, ngx_var_uri)
 
             -- handle阶段
             if pass then
-                if selector.handle and selector.handle.log == true then
+                if rule.handle and rule.handle.log == true then
                     ngx.log(ngx.INFO, "==[HeaderFilter][rule name:", rule.name, "][rule id:", rule.id, ']')
                 end
                 if rule.source and rule.target then

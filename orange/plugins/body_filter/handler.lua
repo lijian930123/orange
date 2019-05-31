@@ -49,14 +49,14 @@ local function filter_rules(sid, plugin, ngx_var_uri)
 
             -- handle阶段
             if pass then
-                if selector.handle and selector.handle.log == true then
+                if rule.handle and rule.handle.log == true then
                     ngx.log(ngx.INFO, "==[BodyFilter][rule name:", rule.name, "][rule id:", rule.id, ']')
                     ngx.log(ngx.INFO, "返回值原文：", ngx.arg[1])
                 end
                 local newContent, n, err = ngx.re.gsub(ngx.arg[1], rule.source, delTargetStr(rule.target))
                 if newContent then
                     ngx.arg[1] = newContent
-                    if selector.handle and selector.handle.log == true then
+                    if rule.handle and rule.handle.log == true then
                         ngx.log(ngx.INFO, "处理后的返回值：", ngx.arg[1])
                     end
                 else

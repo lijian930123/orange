@@ -18,29 +18,25 @@ local function filter_rules(sid, plugin, ngx_var_uri)
         if rule.enable == true then
             -- judge阶段
             local pass = judge_util.judge_rule(rule, plugin)
-
+            local handle = rule.handle
             -- extract阶段
-            local variables = extractor_util.extract_variables(rule.extractor)
+            -- variables = extractor_util.extract_variables(rule.extractor)
 
             -- handle阶段
-            if pass then
-                local handle = rule.handle
+            if (handle.perform == 'allow' and pass) or (handle.perform == 'deny' and not pass) then
+                if handle.log == true then
+                    ngx.log(ngx.INFO, "[WAF-Pass-Rule] ", rule.name, " uri:", ngx_var_uri)
+                end
                 if handle.stat == true then
                     local key = rule.id -- rule.name .. ":" .. rule.id
                     stat.count(key, 1)
                 end
-
-                if handle.perform == 'allow' then
-                    if handle.log == true then
-                        ngx.log(ngx.INFO, "[WAF-Pass-Rule] ", rule.name, " uri:", ngx_var_uri)
-                    end
-                else
-                    if handle.log == true then
-                        ngx.log(ngx.INFO, "[WAF-Forbidden-Rule] ", rule.name, " uri:", ngx_var_uri)
-                    end
-                    ngx.exit(tonumber(handle.code or 403))
-                    return true
+            else
+                if handle.log == true then
+                    ngx.log(ngx.INFO, "[WAF-Forbidden-Rule] ", rule.name, " uri:", ngx_var_uri)
                 end
+                ngx.exit(tonumber(handle.code or 403))
+                return true
             end
         end
     end
