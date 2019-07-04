@@ -31,8 +31,6 @@
             L.Common.initViewAndDownloadEvent(op_type, _this);
             L.Common.initSwitchBtn(op_type, _this);//redirect关闭、开启
             L.Common.initSyncDialog(op_type, _this);//编辑规则对话框
-
-            //_this.initStatisticBtnEvent();
         },
 
         buildRule: function(){
@@ -98,19 +96,6 @@
             result.success = true;
             result.handle = handle;
             return result;
-        },
-
-        initStatisticBtnEvent:function(){
-            $(document).on( "click",".statistic-btn", function(){
-                var self = $(this);
-                var rule_id = self.attr("data-id");
-                var rule_name = self.attr("data-name");
-                if(!rule_id){
-                    return;
-                }
-                window.location.href = "/header_filter/rule/statistic?rule_id="+rule_id+"&rule_name="+encodeURI(rule_name);
-            });
-
         }
     };
 }(APP));

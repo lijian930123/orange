@@ -548,7 +548,7 @@ VALUES
 /*!40000 ALTER TABLE `body_filter` ENABLE KEYS */;
 UNLOCK TABLES;
 
-# Dump of table body_filter
+# Dump of table header_filter
 # ------------------------------------------------------------
 
 DROP TABLE IF EXISTS `header_filter`;

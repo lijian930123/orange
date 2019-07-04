@@ -44,10 +44,15 @@
             var try_times = 5;
             var lastTotalRequstCount = 0;
             var is_first_request = true;
+            var requestUrl = '/monitor/stat';
+            var monitor_type = $("#monitor_type").val()
+            if (monitor_type && monitor_type == "global") {
+                requestUrl = '/global_monitor/stat';
+            }
             _this.data.timer =  setInterval(function (){
 
                 $.ajax({
-                    url : '/monitor/stat',
+                    url : requestUrl,
                     type : 'get',
                     cache: false,
                     data : {

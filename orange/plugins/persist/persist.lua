@@ -12,6 +12,19 @@ local KEY_REQUEST_3XX = "REQUEST_3XX"
 local KEY_REQUEST_4XX = "REQUEST_4XX"
 local KEY_REQUEST_5XX = "REQUEST_5XX"
 
+
+--最后一次落库前数据
+local LAST_KEY_TOTAL_COUNT = "LAST_TOTAL_REQUEST_COUNT"
+local LAST_KEY_TOTAL_SUCCESS_COUNT = "LAST_TOTAL_SUCCESS_REQUEST_COUNT"
+local LAST_KEY_TRAFFIC_READ = "LAST_TRAFFIC_READ"
+local LAST_KEY_TRAFFIC_WRITE = "LAST_TRAFFIC_WRITE"
+local LAST_KEY_TOTAL_REQUEST_TIME = "LAST_TOTAL_REQUEST_TIME"
+
+local LAST_KEY_REQUEST_2XX = "LAST_REQUEST_2XX"
+local LAST_KEY_REQUEST_3XX = "LAST_REQUEST_3XX"
+local LAST_KEY_REQUEST_4XX = "LAST_REQUEST_4XX"
+local LAST_KEY_REQUEST_5XX = "LAST_REQUEST_5XX"
+
 function toint(x)
     local y = math.ceil(x)
     if y == x then
@@ -58,16 +71,26 @@ local function write_data(config)
     local traffic_write = status:get(KEY_TRAFFIC_WRITE)
     local total_request_time = status:get(KEY_TOTAL_REQUEST_TIME)
 
-    -- 清空计数
-    status:set(KEY_REQUEST_2XX, 0)
-    status:set(KEY_REQUEST_3XX, 0)
-    status:set(KEY_REQUEST_4XX, 0)
-    status:set(KEY_REQUEST_5XX, 0)
-    status:set(KEY_TOTAL_COUNT, 0)
-    status:set(KEY_TOTAL_SUCCESS_COUNT, 0)
-    status:set(KEY_TRAFFIC_READ, 0)
-    status:set(KEY_TRAFFIC_WRITE, 0)
-    status:set(KEY_TOTAL_REQUEST_TIME, 0)
+    local last_request_2xx = status:get(LAST_KEY_REQUEST_2XX) or 0
+    local last_request_3xx = status:get(LAST_KEY_REQUEST_3XX) or 0
+    local last_request_4xx = status:get(LAST_KEY_REQUEST_4XX) or 0
+    local last_request_5xx = status:get(LAST_KEY_REQUEST_5XX) or 0
+    local last_total_count = status:get(LAST_KEY_TOTAL_COUNT) or 0
+    local last_total_success_count = status:get(LAST_KEY_TOTAL_SUCCESS_COUNT) or 0
+    local last_traffic_read = status:get(LAST_KEY_TRAFFIC_READ) or 0
+    local last_traffic_write = status:get(LAST_KEY_TRAFFIC_WRITE) or 0
+    local last_total_request_time = status:get(LAST_KEY_TOTAL_REQUEST_TIME) or 0
+
+    -- 记录历史
+    status:set(LAST_KEY_REQUEST_2XX, request_2xx)
+    status:set(LAST_KEY_REQUEST_3XX, request_3xx)
+    status:set(LAST_KEY_REQUEST_4XX, request_4xx)
+    status:set(LAST_KEY_REQUEST_5XX, request_5xx)
+    status:set(LAST_KEY_TOTAL_COUNT, total_count)
+    status:set(LAST_KEY_TOTAL_SUCCESS_COUNT, total_success_count)
+    status:set(LAST_KEY_TRAFFIC_READ, traffic_read)
+    status:set(LAST_KEY_TRAFFIC_WRITE, traffic_write)
+    status:set(LAST_KEY_TOTAL_REQUEST_TIME, total_request_time)
 
     -- 存储统计
     local node_ip = _M.get_ip()
@@ -93,15 +116,15 @@ local function write_data(config)
     else
 
         local params = {
-            tonumber(request_2xx),
-            tonumber(request_3xx),
-            tonumber(request_4xx),
-            tonumber(request_5xx),
-            tonumber(total_count),
-            tonumber(total_success_count),
-            tonumber(traffic_read),
-            tonumber(traffic_write),
-            tonumber(total_request_time),
+            tonumber(request_2xx - last_request_2xx),
+            tonumber(request_3xx - last_request_3xx),
+            tonumber(request_4xx - last_request_4xx),
+            tonumber(request_5xx - last_request_5xx),
+            tonumber(total_count - last_total_count),
+            tonumber(total_success_count - last_total_success_count),
+            tonumber(traffic_read - last_traffic_read),
+            tonumber(traffic_write - last_traffic_write),
+            tonumber(total_request_time - last_total_request_time),
             stat_time,
             node_ip
         }
@@ -136,6 +159,30 @@ local function write_data(config)
     end
 end
 
+local function delete_data(config)
+    local now = ngx.now()
+    local offset = 60 * 60 * 24 * 60
+    local date_now = os.date('*t', now - offset)
+    local min = date_now.min
+
+    local stat_time = string.format('%d-%d-%d %d:%d:00',
+        date_now.year, date_now.month, date_now.day, date_now.hour, min)
+
+    --ngx.log(ngx.ERR, " 删除数据开始时间 ", stat_time)
+    local result, err
+    local table_name = 'persist_log'
+
+    -- 是否存在
+    result, err = config.store:query({
+        sql = "DELETE FROM " .. table_name .. " WHERE stat_time < ? ",
+        params = { stat_time }
+    })
+
+    if not result or err then
+        ngx.log(ngx.ERR, " delete history data has error ", err)
+    end
+end
+
 -- 获取 IP
 local function get_ip_by_hostname(hostname)
     local _, resolved = socket.dns.toip(hostname)
@@ -147,9 +194,11 @@ local function get_ip_by_hostname(hostname)
 end
 
 function _M.init(config)
-    ngx.log(ngx.ERR, "persist init worker")
+    ngx.log(ngx.INFO, "persist init worker")
 
     local interval = 60
+    -- 一天执行一次删除
+    local delete_interval = 60 * 60 * 24
 
     -- 单进程，只执行一次
     if ngx.worker.id() == 0 then
@@ -167,12 +216,22 @@ function _M.init(config)
                 setinterval(function()
                     write_data(config)
                 end, interval)
+
+                -- 定时删除
+                setinterval(function()
+                    delete_data(config)
+                end, delete_interval)
             end)
         else
             -- 定时保存
             setinterval(function()
                 write_data(config)
             end, interval)
+
+            -- 定时删除
+            setinterval(function()
+                delete_data(config)
+            end, delete_interval)
         end
     end
 end

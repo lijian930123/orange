@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {(common/meta.html)}
+</head>
+
+<body class="fixed-sidebar full-height-layout gray-bg">
+    <div id="wrapper">
+        {(common/left_nav.html)}<!-- 左侧导航 -->
+
+        <!--右侧部分开始-->
+        <div id="page-wrapper" class="gray-bg dashbard-1 global-monitor">
+            <div class="row J_mainContent">
+
+                <!-- content start -->
+                <div class="row content-header">
+                    <div class="col-md-12">
+                        <div class="pull-left">
+                            <h4 class="head_title">全局监控</h4>
+                        </div>
+                        <div class="pull-right">
+                             {(common/plugin-op.html)}
+                        </div>
+                    </div>
+                </div>
+
+                {(common/data-view-part.html)}
+                {(common/global-monitor-part.html)}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination" id="pagination"></ul>
+                </nav>
+                <!-- content end -->
+            </div>
+        </div><!--右侧部分结束-->
+        <div id="iframe-wrapper" class="dashbard-1 col-md-6 hide">
+            <div class="close-btn">关闭</div>
+            <div class="uri-wrapper"></div>
+            <div class="iframe-container">
+                <iframe src="" frameborder="0" height="100%" name="monitor-iframe"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script id="rule-item-tpl" type="text/template">
+        {@each rules as r, index}
+            <li data-id="${r.uri}" {@if r.enable==true } class="info-element"{@/if}
+                {@if r.enable!=true } class="warning-element"{@/if}>
+                <table class="table table-hover single-rule-table">
+                    <tbody>
+                        <tr class="rule-row-tr">
+                            <td class="center rule-enable-td">
+                                <span class="label label-primary">URI</span>
+                            </td>
+                            <td class="rule-name-td">
+                                <b class="namep">${r.uri}</b>
+                            </td>
+                            <td class="left rule-totalCount-td">
+                                <b class="totalCount">请求次数: ${r.totalCount}</b>
+                            </td>
+                            <td class="left rule-averageRequestTime-td">
+                                <b class="averageRequestTime">平均响应时间: ${r.averageRequestTime} ms</b>
+                            </td>
+                            <td class="center rule-op-td hide">
+                                <a class="btn btn-white btn-sm statistic-btn" data-id="${r.uri}" ><i title="查看统计" class="fa fa-bar-chart"></i> </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </li>
+        {@/each}
+    </script>
+
+    {(common/common_js.html)}<!-- 通用js -->
+    <script src="/static/js/libs/jquery.twbsPagination.min.js" type="text/javascript"></script>
+    <script src="/static/js/libs/bootstrap-switch.min.js" type="text/javascript"></script>
+    <script src="/static/js/global_monitor.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            APP.Common.resetNav("nav-global-monitor");
+            APP.GlobalMonitor.init();
+            // $(".sortable-list").sortable().disableSelection();
+        });
+    </script>
+</body>
+</html>
