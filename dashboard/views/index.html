@@ -299,6 +299,7 @@
     {(common/common_js.html)}<!-- 通用js -->
     <script type="text/javascript">
         APP.Common.resetNav("nav-index");
+        APP.Common.loadMenus();
         $(document).ready(function(){
             $(document).on('click', '.plugin-item', function(){
                 var uri =  $(this).attr("data-uri");

@@ -7,6 +7,63 @@ local lor = require("lor.index")
 local lua_next = next
 local json = require "cjson"
 
+local function getApiData(config)
+    --- 全局信息
+    -- 当前加载的插件，开启与关闭情况
+    -- 每个插件的规则条数等
+    local data = {}
+    local plugins = config.plugins
+    data.plugins = plugins
+
+    local orange_db = require("orange.store.orange_db")
+
+    local plugin_configs = {}
+    for i, v in ipairs(plugins) do
+        local tmp
+        if v ~= "kvstore" then
+            tmp = {
+                enable =  orange_db.get(v .. ".enable"),
+                name = v,
+                active_selector_count = 0,
+                inactive_selector_count = 0,
+                active_rule_count = 0,
+                inactive_rule_count = 0
+            }
+            local plugin_selectors = orange_db.get_json(v .. ".selectors")
+            if plugin_selectors then
+                for sid, s in pairs(plugin_selectors) do
+                    if s.enable == true then
+                        tmp.active_selector_count = tmp.active_selector_count + 1
+                        local selector_rules = orange_db.get_json(v .. ".selector." .. sid .. ".rules")
+                        if not selector_rules then
+                            tmp.active_rule_count = 0
+                            tmp.inactive_rule_count = 0
+                        else
+                            for _, r in ipairs(selector_rules) do
+                                if r.enable == true then
+                                    tmp.active_rule_count = tmp.active_rule_count + 1
+                                else
+                                    tmp.inactive_rule_count = tmp.inactive_rule_count + 1
+                                end
+                            end
+                        end
+                    else
+                        tmp.inactive_selector_count = tmp.inactive_selector_count + 1
+                    end
+                end
+            end
+            plugin_configs[v] = tmp
+        else
+            tmp = {
+                enable =  orange_db.get(v .. ".enable"),
+                name = v
+            }
+        end
+        plugin_configs[v] = tmp
+    end
+    data.plugin_configs = plugin_configs
+    return data
+end
 
 local function load_plugin_api(plugin, dashboard_router, store)
     local plugin_api_path = "orange.plugins." .. plugin .. ".api"
@@ -45,63 +102,15 @@ end
 
 return function(config, store)
     local dashboard_router = lor:Router()
-    local orange_db = require("orange.store.orange_db")
 
     dashboard_router:get("/", function(req, res, next)
-        --- 全局信息
-        -- 当前加载的插件，开启与关闭情况
-        -- 每个插件的规则条数等
-        local data = {}
-        local plugins = config.plugins
-        data.plugins = plugins
-
-        local plugin_configs = {}
-        for i, v in ipairs(plugins) do
-            local tmp
-            if v ~= "kvstore" then
-                tmp = {
-                    enable =  orange_db.get(v .. ".enable"),
-                    name = v,
-                    active_selector_count = 0,
-                    inactive_selector_count = 0,
-                    active_rule_count = 0,
-                    inactive_rule_count = 0
-                }
-                local plugin_selectors = orange_db.get_json(v .. ".selectors")
-                if plugin_selectors then
-                    for sid, s in pairs(plugin_selectors) do
-                        if s.enable == true then
-                            tmp.active_selector_count = tmp.active_selector_count + 1
-                            local selector_rules = orange_db.get_json(v .. ".selector." .. sid .. ".rules")
-                            if not selector_rules then
-                                tmp.active_rule_count = 0
-                                tmp.inactive_rule_count = 0
-                            else
-                                for _, r in ipairs(selector_rules) do
-                                    if r.enable == true then
-                                        tmp.active_rule_count = tmp.active_rule_count + 1
-                                    else
-                                        tmp.inactive_rule_count = tmp.inactive_rule_count + 1
-                                    end
-                                end
-                            end
-                        else
-                            tmp.inactive_selector_count = tmp.inactive_selector_count + 1
-                        end
-                    end
-                end
-                plugin_configs[v] = tmp
-            else
-                tmp = {
-                    enable =  orange_db.get(v .. ".enable"),
-                    name = v
-                }
-            end
-            plugin_configs[v] = tmp
-        end
-        data.plugin_configs = plugin_configs
-
+        local data = getApiData(config)
         res:render("index", data)
+    end)
+
+    dashboard_router:get("/apidata", function(req, res, next)
+        local data = getApiData(config)
+        res:json(data)
     end)
 
     dashboard_router:get("/status", function(req, res, next)
@@ -126,6 +135,10 @@ return function(config, store)
 
     dashboard_router:get("/header_filter", function(req, res, next)
         res:render("header_filter")
+    end)
+
+    dashboard_router:get("/arg_filter", function(req, res, next)
+        res:render("arg_filter")
     end)
 
     dashboard_router:get("/monitor/rule/statistic", function(req, res, next)

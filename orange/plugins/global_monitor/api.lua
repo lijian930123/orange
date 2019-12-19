@@ -32,6 +32,17 @@ api:get("/global_monitor/list", function(store)
 
         local keys = stat:getTable()
 
+        if not keys or type(keys) ~= "table" or #keys <= 0 then
+            res:json({
+                success = true,
+                data = {
+                    rules = {}
+                },
+                totalPage = 0
+            })
+            return false
+        end
+
         local usefulkeys = {}
 
         if rule_id then

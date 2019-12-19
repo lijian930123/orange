@@ -87,7 +87,7 @@
             data = data || {};
             if(!data.rules || data.rules.length<1){
                 var html = '<div class="alert alert-warning" style="margin: 25px 0 10px 0;">'+
-                        '<p>该选择器下没有规则,请添加!</p>'+
+                        '<p>目前没有经过网关的请求!</p>'+
                 '</div>';
                 $("#rules").html(html);
             }else{

@@ -18,7 +18,7 @@ local status = ngx.shared.global_monitor
 function string:split(sep)
     local sep, fields = sep or ":", {}
     local pattern = string.format("([^%s]+)", sep)
-    self:gsub(pattern, function (c) fields[#fields + 1] = c end)
+    self:gsub(pattern, function(c) fields[#fields + 1] = c end)
     return fields
 end
 
@@ -141,6 +141,9 @@ end
 
 function _M.getTable()
     local urltable, _ = status:get("urltable")
+    if urltable == nil or urltable == "" then
+        return false
+    end
     return urltable:split("|") or {}
 end
 

@@ -1426,6 +1426,7 @@
         },
 
         loadConfigs: function (type, context, page_load, callback) {
+            _this.loadMenus();
             var op_type = type;
             $.ajax({
                 url: '/' + op_type + '/selectors',
@@ -1464,6 +1465,32 @@
                 },
                 error: function () {
                     _this.showErrorTip("提示", "查询" + op_type + "配置请求发生异常");
+                }
+            });
+        },
+
+        loadMenus: function () {
+            $.ajax({
+                url: '/apidata',
+                type: 'get',
+                cache: false,
+                data: {},
+                dataType: 'json',
+                success: function (result) {
+                    if (result) {
+                        $.each(result.plugin_configs, function(key, value){
+                            if (!value.enable) {
+                                var name = key.replace(new RegExp("_",'g'),"-");
+                                var title = "#nav-" + name;
+                                $(title).hide();
+                            }
+                        });
+                    } else {
+                        _this.showErrorTip("错误提示", "刷新左侧菜单失败！");
+                    }
+                },
+                error: function () {
+                    _this.showErrorTip("提示", "查询左侧菜单发生异常， 请刷新页面！");
                 }
             });
         },
